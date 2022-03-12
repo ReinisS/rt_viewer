@@ -8,7 +8,7 @@ class Box : public Hitable {
   public:
     Box() {}
     Box(const glm::vec3 &cen, const glm::vec3 r) : center(cen), radius(r){};
-    virtual bool hit(const Ray &r, float t_min, float t_max, HitRecord &rec) const;
+    virtual bool hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const;
 
     glm::vec3 center;
     glm::vec3 radius;
@@ -16,7 +16,7 @@ class Box : public Hitable {
 
 // Ray-box test adapted from branchless code at
 // https://tavianator.com/fast-branchless-raybounding-box-intersections/
-bool Box::hit(const Ray &r, float t_min, float t_max, HitRecord &rec) const
+bool Box::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const
 {
     glm::vec3 oc = r.origin() - center;
     glm::vec3 t0 = (-radius - oc) / r.direction();

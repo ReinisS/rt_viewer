@@ -6,6 +6,10 @@
 #include "glm/ext.hpp"
 
 #include <cstdlib>
+#include <memory>
+
+using std::shared_ptr;
+using std::make_shared;
 
 namespace rt {
 
@@ -50,6 +54,12 @@ glm::vec3 random_in_hemisphere(const glm::vec3& normal) {
         return in_unit_sphere;
     else
         return -in_unit_sphere;
+}
+
+// Return true if the vector is close to zero in all dimensions.
+bool near_zero_vec3(glm::vec3 e) {
+    const auto s = 1e-8;
+    return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
 }
 
 }  // namespace rt

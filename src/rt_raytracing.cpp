@@ -5,6 +5,7 @@
 #include "rt_triangle.h"
 #include "rt_box.h"
 #include "rt_weekend.h"
+#include "rt_material.h"
 
 #include "cg_utils2.h"  // Used for OBJ-mesh loading
 
@@ -19,33 +20,33 @@ struct Scene {
     Box mesh_bbox;
 } g_scene;
 
-bool hit_world(const Ray &r, float t_min, float t_max, HitRecord &rec)
+bool hit_world(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec)
 {
     HitRecord temp_rec;
     bool hit_anything = false;
     float closest_so_far = t_max;
 
-    if (g_scene.ground.hit(r, t_min, closest_so_far, temp_rec)) {
+    if (g_scene.ground.hit(rtx, r, t_min, closest_so_far, temp_rec)) {
         hit_anything = true;
         closest_so_far = temp_rec.t;
         rec = temp_rec;
     }
     for (int i = 0; i < g_scene.spheres.size(); ++i) {
-        if (g_scene.spheres[i].hit(r, t_min, closest_so_far, temp_rec)) {
+        if (g_scene.spheres[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             rec = temp_rec;
         }
     }
     for (int i = 0; i < g_scene.boxes.size(); ++i) {
-        if (g_scene.boxes[i].hit(r, t_min, closest_so_far, temp_rec)) {
+        if (g_scene.boxes[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             rec = temp_rec;
         }
     }
     for (int i = 0; i < g_scene.mesh.size(); ++i) {
-        if (g_scene.mesh[i].hit(r, t_min, closest_so_far, temp_rec)) {
+        if (g_scene.mesh[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
             hit_anything = true;
             closest_so_far = temp_rec.t;
             rec = temp_rec;
@@ -68,27 +69,17 @@ glm::vec3 color(RTContext &rtx, const Ray &r, int max_bounces)
     if (max_bounces < 0) return glm::vec3(0.0f);
 
     HitRecord rec;
-    if (hit_world(r, 0.001f, 9999.0f, rec)) {       // Set min to avoid "shadow acne" (floating point approximation error)
+    if (hit_world(rtx, r, 0.001f, 9999.0f, rec)) {       // Set min to avoid "shadow acne" (floating point approximation error)
         rec.normal = glm::normalize(rec.normal);    // Always normalise before use!
         if (rtx.show_normals) { return rec.normal * 0.5f + 0.5f; }
 
         // Implement lighting for materials here
         // ...
-        glm::vec3 random_diffuse;
-        if (rtx.diffuse_method == 0) {
-            random_diffuse = random_in_unit_sphere();
-        }
-        else if (rtx.diffuse_method == 1) {
-            random_diffuse = random_unit_vector();
-        }
-        else if (rtx.diffuse_method == 2) {
-            random_diffuse = random_in_hemisphere(rec.normal);
-        }
-        else {
-            random_diffuse = glm::vec3(0.0f);
-        }
-        glm::vec3 target = rec.p + rec.normal + random_diffuse;
-        return 0.5f * color(rtx, Ray(rec.p, target - rec.p), max_bounces - 1);
+        Ray scattered;
+        glm::vec3 attenuation;
+        if (rec.mat_ptr->scatter(rtx, r, rec, attenuation, scattered))
+            return attenuation * color(rtx, scattered, max_bounces-1);
+        return glm::vec3(0.0f);
     }
 
     // If no hit, return sky color
@@ -100,11 +91,16 @@ glm::vec3 color(RTContext &rtx, const Ray &r, int max_bounces)
 // MODIFY THIS FUNCTION!
 void setupScene(RTContext &rtx, const char *filename)
 {
-    g_scene.ground = Sphere(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f);
+    auto material_ground = make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
+    auto material_center = make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
+    auto material_left   = make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.3f);
+    auto material_right  = make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.8f);
+
+    g_scene.ground = Sphere(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground);
     g_scene.spheres = {
-        Sphere(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f),
-        Sphere(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f),
-        Sphere(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f),
+        Sphere(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f, material_center),
+        Sphere(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f, material_right),
+        Sphere(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f, material_left),
     };
     //g_scene.boxes = {
     //    Box(glm::vec3(0.0f, -0.25f, 0.0f), glm::vec3(0.25f)),

@@ -8,7 +8,7 @@ class Triangle : public Hitable {
   public:
     Triangle() {}
     Triangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c) : v0(a), v1(b), v2(c){};
-    virtual bool hit(const Ray &r, float t_min, float t_max, HitRecord &rec) const;
+    virtual bool hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const;
 
     glm::vec3 v0;
     glm::vec3 v1;
@@ -16,7 +16,7 @@ class Triangle : public Hitable {
 };
 
 // Ray-triangle test adapted from "Real-Time Collision Detection" book (pages 191--192)
-bool Triangle::hit(const Ray &r, float t_min, float t_max, HitRecord &rec) const
+bool Triangle::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const
 {
     glm::vec3 n = glm::cross(v1 - v0, v2 - v0);
     float d = glm::dot(-r.direction(), n);
