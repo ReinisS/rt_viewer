@@ -96,12 +96,20 @@ void setupScene(RTContext &rtx, const char *filename)
     auto material_left   = make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.3f);
     auto material_right  = make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.8f);
 
+    auto material_blue_metal = make_shared<Metal>(glm::vec3(0.0f, 0.0f, 1.0f), 0.1f);
+    auto material_orange_metal = make_shared<Metal>(glm::vec3(1.0f, 0.6f, 0.0f), 0.6f);
+    auto material_red_matte = make_shared<Lambertian>(glm::vec3(1.0f, 0.0f, 0.0f));
+
     g_scene.ground = Sphere(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground);
     
     g_scene.spheres = {
         Sphere(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f, material_center),
         Sphere(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f, material_right),
         Sphere(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f, material_left),
+
+        Sphere(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, material_blue_metal),
+        Sphere(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, material_orange_metal),
+        Sphere(glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, material_red_matte),
     };
 
     // g_scene.boxes = {
