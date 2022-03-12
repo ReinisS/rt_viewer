@@ -135,7 +135,7 @@ void updateLine(RTContext &rtx, int y)
     glm::mat4 world_from_view = glm::inverse(rtx.view);
 
     // You can try parallelising this loop by uncommenting this line:
-    //#pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(dynamic)
     for (int x = 0; x < nx; ++x) {
         float u, v;
         if (rtx.perform_antialiasing) {
