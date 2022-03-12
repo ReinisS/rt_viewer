@@ -4,9 +4,9 @@
 #include "rt_sphere.h"
 #include "rt_triangle.h"
 #include "rt_box.h"
+#include "rt_weekend.h"
 
 #include "cg_utils2.h"  // Used for OBJ-mesh loading
-#include <stdlib.h>     // Needed for drand48()
 
 namespace rt {
 
@@ -127,8 +127,17 @@ void updateLine(RTContext &rtx, int y)
     // You can try parallelising this loop by uncommenting this line:
     //#pragma omp parallel for schedule(dynamic)
     for (int x = 0; x < nx; ++x) {
-        float u = (float(x) + 0.5f) / float(nx);
-        float v = (float(y) + 0.5f) / float(ny);
+        float u, v;
+        if (rtx.perform_antialiasing) {
+            // Add random jitter to u, v so that we get antialiasing from averaging color values between multiple frames
+            u = (float(x) + float(random_double())) / float(nx);
+            v = (float(y) + float(random_double())) / float(ny);
+        }
+        else {
+            u = (float(x) + 0.5f) / float(nx);
+            v = (float(y) + 0.5f) / float(ny);
+        }
+
         Ray r(origin, lower_left_corner + u * horizontal + v * vertical);
         r.A = glm::vec3(world_from_view * glm::vec4(r.A, 1.0f));
         r.B = glm::vec3(world_from_view * glm::vec4(r.B, 0.0f));

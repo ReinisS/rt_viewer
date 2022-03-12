@@ -142,6 +142,7 @@ void showGui(Context &ctx)
         rt::resetAccumulation(ctx.rtx);
     }
     if (ImGui::Checkbox("Show normals", &ctx.rtx.show_normals)) { rt::resetAccumulation(ctx.rtx); }
+    if (ImGui::Checkbox("Perform Antialiasing", &ctx.rtx.perform_antialiasing)) { rt::resetAccumulation(ctx.rtx); }
     // Add more settings and parameters here
     // ...
 
