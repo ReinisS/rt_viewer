@@ -27,12 +27,18 @@ inline static glm::vec3 random_vec3(double min, double max) {
     return glm::vec3(float(random_double(min,max)), float(random_double(min,max)), float(random_double(min,max)));
 }
 
+// Rejection method for generating a random vec3 in a unit radius sphere
 glm::vec3 random_in_unit_sphere() {
     while (true) {
         auto p = random_vec3(-1,1);
         if (glm::length2(p) >= 1) continue;
         return p;
     }
+}
+
+// Normalize to get True Lambertian Reflection
+glm::vec3 random_unit_vector() {
+    return glm::normalize(random_in_unit_sphere());
 }
 
 }  // namespace rt
