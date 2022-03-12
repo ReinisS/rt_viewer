@@ -74,7 +74,20 @@ glm::vec3 color(RTContext &rtx, const Ray &r, int max_bounces)
 
         // Implement lighting for materials here
         // ...
-        glm::vec3 target = rec.p + rec.normal + random_unit_vector();
+        glm::vec3 random_diffuse;
+        if (rtx.diffuse_method == 0) {
+            random_diffuse = random_in_unit_sphere();
+        }
+        else if (rtx.diffuse_method == 1) {
+            random_diffuse = random_unit_vector();
+        }
+        else if (rtx.diffuse_method == 2) {
+            random_diffuse = random_in_hemisphere(rec.normal);
+        }
+        else {
+            random_diffuse = glm::vec3(0.0f);
+        }
+        glm::vec3 target = rec.p + rec.normal + random_diffuse;
         return 0.5f * color(rtx, Ray(rec.p, target - rec.p), max_bounces - 1);
     }
 

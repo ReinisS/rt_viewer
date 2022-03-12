@@ -24,6 +24,7 @@ struct RTContext {
     bool show_normals = false;
     bool perform_antialiasing = true;
     bool perform_gamma_correction = true;
+    int diffuse_method = 2; // 0 - Random in unit sphere, 1 - Normalized random in unit sphere, 2 - Random in unit hemisphere
     // Add more settings and parameters here
     // ...
 };

@@ -144,10 +144,17 @@ void showGui(Context &ctx)
     if (ImGui::ColorEdit3("Ground color", &ctx.rtx.ground_color[0])) {
         rt::resetAccumulation(ctx.rtx);
     }
+    // Add more settings and parameters here
     if (ImGui::Checkbox("Show normals", &ctx.rtx.show_normals)) { rt::resetAccumulation(ctx.rtx); }
     if (ImGui::Checkbox("Perform Antialiasing", &ctx.rtx.perform_antialiasing)) { rt::resetAccumulation(ctx.rtx); }
     if (ImGui::Checkbox("Perform Gamma correction", &ctx.rtx.perform_gamma_correction)) { rt::resetAccumulation(ctx.rtx); }
-    // Add more settings and parameters here
+    {
+        const char* items[] = {
+            "Random in unit sphere",
+            "Normalized random in unit sphere",
+            "Random in unit hemisphere" };
+        ImGui::Combo("Diffuse method", &ctx.rtx.diffuse_method, items, 3);
+    }
     // ...
 
     ImGui::Text("Progress");
