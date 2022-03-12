@@ -21,8 +21,9 @@ struct RTContext {
     glm::mat4 view = glm::mat4(1.0f);
     glm::vec3 ground_color = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec3 sky_color = glm::vec3(0.5f, 0.7f, 1.0f);
-    bool show_normals = true;
+    bool show_normals = false;
     bool perform_antialiasing = true;
+    bool perform_gamma_correction = true;
     // Add more settings and parameters here
     // ...
 };
