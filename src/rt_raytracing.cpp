@@ -1,11 +1,13 @@
 #include "rt_raytracing.h"
 #include "rt_ray.h"
 #include "rt_hitable.h"
+#include "rt_hitable_list.h"
 #include "rt_sphere.h"
 #include "rt_triangle.h"
 #include "rt_box.h"
 #include "rt_weekend.h"
 #include "rt_material.h"
+#include "rt_bvh_node.h"
 
 #include "cg_utils2.h"  // Used for OBJ-mesh loading
 
@@ -14,10 +16,12 @@ namespace rt {
 // Store scene (world) in a global variable for convenience
 struct Scene {
     Sphere ground;
-    std::vector<Sphere> spheres;
-    std::vector<Box> boxes;
-    std::vector<Triangle> mesh;
-    Box mesh_bbox;
+    // Repalced by generic HitableList world
+    // std::vector<Sphere> spheres;
+    // std::vector<Box> boxes;
+    // std::vector<Triangle> mesh;
+    // Box mesh_bbox;
+    HitableList world;
 } g_scene;
 
 bool hit_world(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec)
@@ -26,32 +30,39 @@ bool hit_world(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord
     bool hit_anything = false;
     float closest_so_far = t_max;
 
-    if (g_scene.ground.hit(rtx, r, t_min, closest_so_far, temp_rec)) {
+    if (g_scene.world.hit(rtx, r, t_min, closest_so_far, temp_rec)) {
         hit_anything = true;
         closest_so_far = temp_rec.t;
         rec = temp_rec;
     }
-    for (int i = 0; i < g_scene.spheres.size(); ++i) {
-        if (g_scene.spheres[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
-            hit_anything = true;
-            closest_so_far = temp_rec.t;
-            rec = temp_rec;
-        }
-    }
-    for (int i = 0; i < g_scene.boxes.size(); ++i) {
-        if (g_scene.boxes[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
-            hit_anything = true;
-            closest_so_far = temp_rec.t;
-            rec = temp_rec;
-        }
-    }
-    for (int i = 0; i < g_scene.mesh.size(); ++i) {
-        if (g_scene.mesh[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
-            hit_anything = true;
-            closest_so_far = temp_rec.t;
-            rec = temp_rec;
-        }
-    }
+
+    // Replaced by generic HitableList world hit checking
+    // if (g_scene.ground.hit(rtx, r, t_min, closest_so_far, temp_rec)) {
+    //     hit_anything = true;
+    //     closest_so_far = temp_rec.t;
+    //     rec = temp_rec;
+    // }
+    // for (int i = 0; i < g_scene.spheres.size(); ++i) {
+    //     if (g_scene.spheres[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
+    //         hit_anything = true;
+    //         closest_so_far = temp_rec.t;
+    //         rec = temp_rec;
+    //     }
+    // }
+    // for (int i = 0; i < g_scene.boxes.size(); ++i) {
+    //     if (g_scene.boxes[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
+    //         hit_anything = true;
+    //         closest_so_far = temp_rec.t;
+    //         rec = temp_rec;
+    //     }
+    // }
+    // for (int i = 0; i < g_scene.mesh.size(); ++i) {
+    //     if (g_scene.mesh[i].hit(rtx, r, t_min, closest_so_far, temp_rec)) {
+    //         hit_anything = true;
+    //         closest_so_far = temp_rec.t;
+    //         rec = temp_rec;
+    //     }
+    // }
     return hit_anything;
 }
 
@@ -69,7 +80,7 @@ glm::vec3 color(RTContext &rtx, const Ray &r, int max_bounces)
     if (max_bounces < 0) return glm::vec3(0.0f);
 
     HitRecord rec;
-    if (hit_world(rtx, r, 0.001f, 9999.0f, rec)) {       // Set min to avoid "shadow acne" (floating point approximation error)
+    if (hit_world(rtx, r, 0.001f, 9999.0f, rec)) {  // Set min to avoid "shadow acne" (floating point approximation error)
         rec.normal = glm::normalize(rec.normal);    // Always normalise before use!
         if (rtx.show_normals) { return rec.normal * 0.5f + 0.5f; }
 
@@ -91,33 +102,39 @@ glm::vec3 color(RTContext &rtx, const Ray &r, int max_bounces)
 // MODIFY THIS FUNCTION!
 void setupScene(RTContext &rtx, const char *filename)
 {
-    auto material_ground = make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
+    auto material_ground = make_shared<Lambertian>(glm::vec3(0.2f, 0.6f, 0.2f));
+    
     auto material_center = make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
-    auto material_left   = make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.3f);
-    auto material_right  = make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.8f);
+    auto material_left   = make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.1f);
+    auto material_right  = make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.5f);
 
     auto material_blue_metal = make_shared<Metal>(glm::vec3(0.0f, 0.0f, 1.0f), 0.1f);
     auto material_orange_metal = make_shared<Metal>(glm::vec3(1.0f, 0.6f, 0.0f), 0.6f);
     auto material_red_matte = make_shared<Lambertian>(glm::vec3(1.0f, 0.0f, 0.0f));
 
-    g_scene.ground = Sphere(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground);
-    
-    g_scene.spheres = {
-        Sphere(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f, material_center),
-        Sphere(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f, material_right),
-        Sphere(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f, material_left),
+    // Old way of adding objects to the scene
+    // Ground sphere
+    // g_scene.ground = Sphere(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground);
 
-        Sphere(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, material_blue_metal),
-        Sphere(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, material_orange_metal),
-        Sphere(glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, material_red_matte),
-    };
+    // Other spheres
+    // g_scene.spheres = {
+    //     Sphere(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f, material_center),
+    //     Sphere(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f, material_right),
+    //     Sphere(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f, material_left),
 
+    //     Sphere(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, material_blue_metal),
+    //     Sphere(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, material_orange_metal),
+    //     Sphere(glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, material_red_matte),
+    // };
+
+    // Boxes
     // g_scene.boxes = {
     //    Box(glm::vec3(0.0f, -0.25f, 0.0f), glm::vec3(0.25f), material_center),
     //    Box(glm::vec3(1.0f, -0.25f, 0.0f), glm::vec3(0.25f), material_right),
     //    Box(glm::vec3(-1.0f, -0.25f, 0.0f), glm::vec3(0.25f), material_left),
     // };
 
+    // Triangle mesh
     // cg::OBJMesh mesh;
     // cg::objMeshLoad(mesh, filename);
     // g_scene.mesh.clear();
@@ -130,6 +147,37 @@ void setupScene(RTContext &rtx, const char *filename)
     //    glm::vec3 v2 = mesh.vertices[i2] + glm::vec3(0.0f, 0.135f, 0.0f);
     //    g_scene.mesh.push_back(Triangle(v0, v1, v2, material_center));
     // }
+
+    // New way of adding objects to g_scene.world object
+    HitableList world;
+    g_scene.world.clear();
+
+    // Ground sphere
+    world.add(make_shared<Sphere>(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground));
+
+    // Other spheres
+    // world.add(make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f, material_center));
+    world.add(make_shared<Sphere>(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f, material_right));
+    world.add(make_shared<Sphere>(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f, material_left));
+
+    world.add(make_shared<Sphere>(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, material_blue_metal));
+    world.add(make_shared<Sphere>(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, material_orange_metal));
+    world.add(make_shared<Sphere>(glm::vec3(1.0f, 0.0f, -1.0f), 0.5f, material_red_matte));
+
+    // Triangle mesh
+    cg::OBJMesh mesh;
+    cg::objMeshLoad(mesh, filename);
+    for (int i = 0; i < mesh.indices.size(); i += 3) {
+       int i0 = mesh.indices[i + 0];
+       int i1 = mesh.indices[i + 1];
+       int i2 = mesh.indices[i + 2];
+       glm::vec3 v0 = mesh.vertices[i0] + glm::vec3(0.0f, 0.135f, 0.0f);
+       glm::vec3 v1 = mesh.vertices[i1] + glm::vec3(0.0f, 0.135f, 0.0f);
+       glm::vec3 v2 = mesh.vertices[i2] + glm::vec3(0.0f, 0.135f, 0.0f);
+       world.add(make_shared<Triangle>(Triangle(v0, v1, v2, material_left)));
+    }
+
+    g_scene.world = HitableList(make_shared<BvhNode>(world, 0.0, 1.0));
 }
 
 // MODIFY THIS FUNCTION!

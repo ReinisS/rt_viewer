@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <memory>
+#include <iostream>
 
 using std::shared_ptr;
 using std::make_shared;
@@ -60,6 +61,11 @@ glm::vec3 random_in_hemisphere(const glm::vec3& normal) {
 bool near_zero_vec3(glm::vec3 e) {
     const auto s = 1e-8;
     return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
+}
+
+// Returns a random integer in [min,max].
+inline int random_int(int min, int max) {
+    return static_cast<int>(random_double(min, max+1));
 }
 
 }  // namespace rt

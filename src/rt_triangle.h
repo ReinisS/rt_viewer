@@ -8,7 +8,10 @@ class Triangle : public Hitable {
   public:
     Triangle() {}
     Triangle(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, shared_ptr<Material> m) : v0(a), v1(b), v2(c), mat_ptr(m){};
+
     virtual bool hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const;
+
+    virtual bool bounding_box(double time0, double time1, AABB& output_box) const override;
 
     glm::vec3 v0;
     glm::vec3 v1;
@@ -40,6 +43,15 @@ bool Triangle::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRe
         }
     }
     return false;
+}
+
+// "Finding the bounding box for a triangle is a matter of finding the smallest and largest x, y, and z components from its three points."
+// http://raytracerchallenge.com/bonus/bounding-boxes.html
+bool Triangle::bounding_box(double time0, double time1, AABB& output_box) const {
+    output_box = AABB(
+        glm::vec3(glm::min(v0.x, v1.x, v2.x), glm::min(v0.y, v1.y, v2.y), glm::min(v0.z, v1.z, v2.z)),
+        glm::vec3(glm::max(v0.x, v1.x, v2.x), glm::max(v0.y, v1.y, v2.y), glm::max(v0.z, v1.z, v2.z)));
+    return true;
 }
 
 }  // namespace rt

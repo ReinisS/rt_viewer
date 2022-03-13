@@ -9,7 +9,10 @@ class Sphere : public Hitable {
   public:
     Sphere() {}
     Sphere(const glm::vec3 &cen, float r, shared_ptr<Material> m) : center(cen), radius(r), mat_ptr(m){};
+
     virtual bool hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const;
+    
+    virtual bool bounding_box(double time0, double time1, AABB& output_box) const override;
 
     glm::vec3 center;
     float radius;
@@ -17,8 +20,7 @@ class Sphere : public Hitable {
 };
 
 // Ray-sphere test from "Ray Tracing in a Weekend" book (page 16)
-bool Sphere::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const
-{
+bool Sphere::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const {
     glm::vec3 oc = r.origin() - center;
     float a = glm::dot(r.direction(), r.direction());
     float b = 2.0f * glm::dot(oc, r.direction());
@@ -37,6 +39,13 @@ bool Sphere::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitReco
         }
     }
     return false;
+}
+
+bool Sphere::bounding_box(double time0, double time1, AABB& output_box) const {
+    output_box = AABB(
+        center - glm::vec3(radius, radius, radius),
+        center + glm::vec3(radius, radius, radius));
+    return true;
 }
 
 }  // namespace rt

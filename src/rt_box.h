@@ -8,6 +8,7 @@ class Box : public Hitable {
   public:
     Box() {}
     Box(const glm::vec3 &cen, const glm::vec3 r, shared_ptr<Material> m) : center(cen), radius(r), mat_ptr(m){};
+    
     virtual bool hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord &rec) const;
 
     glm::vec3 center;
