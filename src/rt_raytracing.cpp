@@ -194,6 +194,63 @@ HitableList custom_scene(const char *filename) {
     return world;
 }
 
+HitableList semi_random_scene(const char *filename) {
+    HitableList world;
+
+    auto ground_material = make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
+    world.add(make_shared<Sphere>(glm::vec3(0,-1000,0), 1000, ground_material));
+
+    for (int a = -5; a < 5; a++) {
+        for (int b = -5; b < 5; b++) {
+            auto choose_mat = random_double();
+            glm::vec3 center(a + 0.3*random_double(), 0.2, b + 0.3*random_double());
+
+            if ((center - glm::vec3(4, 0.2, 0)).length() > 0.9) {
+                shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = random_vec3() * random_vec3();
+                    sphere_material = make_shared<Lambertian>(albedo);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    auto albedo = random_vec3(0.5, 1);
+                    auto fuzz = random_double(0, 0.5);
+                    sphere_material = make_shared<Metal>(albedo, fuzz);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = make_shared<Dielectric>(1.5);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    auto material1 = make_shared<Dielectric>(1.5);
+    world.add(make_shared<Sphere>(glm::vec3(-1.25, 0.5, 0), 0.5, material1));
+
+    auto material2 = make_shared<Metal>(glm::vec3(0.8, 0.8, 0.8), 0.1);
+    // Triangle mesh
+    cg::OBJMesh mesh;
+    cg::objMeshLoad(mesh, filename);
+    for (int i = 0; i < mesh.indices.size(); i += 3) {
+       int i0 = mesh.indices[i + 0];
+       int i1 = mesh.indices[i + 1];
+       int i2 = mesh.indices[i + 2];
+       glm::vec3 v0 = mesh.vertices[i0] + glm::vec3(0.0f, 0.5f, 0.0f);
+       glm::vec3 v1 = mesh.vertices[i1] + glm::vec3(0.0f, 0.5f, 0.0f);
+       glm::vec3 v2 = mesh.vertices[i2] + glm::vec3(0.0f, 0.5f, 0.0f);
+       world.add(make_shared<Triangle>(Triangle(v0, v1, v2, material2)));
+    }
+
+    auto material3 = make_shared<Metal>(glm::vec3(0.7, 0.6, 0.5), 0.0);
+    world.add(make_shared<Sphere>(glm::vec3(1.25, 0.5, 0), 0.5, material3));
+
+    return world;
+}
+
 HitableList random_scene() {
     HitableList world;
 
@@ -246,7 +303,8 @@ void setupScene(RTContext &rtx, const char *filename)
     g_scene.world.clear();
 
     // custom_scene_old(filename);
-    HitableList world = custom_scene(filename);
+    // HitableList world = custom_scene(filename);
+    HitableList world = semi_random_scene(filename);
     // HitableList world = random_scene();
 
     g_scene.world = HitableList(make_shared<BvhNode>(world, 0.0, 1.0));

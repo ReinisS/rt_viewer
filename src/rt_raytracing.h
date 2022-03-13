@@ -19,7 +19,7 @@ struct RTContext {
     int max_bounces = 3;
     float epsilon = 2e-4f;
     glm::mat4 view = glm::mat4(1.0f);
-    glm::vec3 ground_color = glm::vec3(0.2f, 0.6f, 0.2f);
+    glm::vec3 ground_color = glm::vec3(0.5f, 0.5f, 0.5f);
     glm::vec3 sky_color = glm::vec3(0.5f, 0.7f, 1.0f);
     bool show_normals = false;
     bool perform_antialiasing = true;
