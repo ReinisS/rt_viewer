@@ -25,6 +25,8 @@ struct RTContext {
     bool perform_antialiasing = true;
     bool perform_gamma_correction = true;
     int diffuse_method = 2; // 0 - Random in unit sphere, 1 - Normalized random in unit sphere, 2 - Random in unit hemisphere
+    float vfov = 90.0f;     // Vertical field-of-view in degrees
+    float vfov_step = 1.0f;
     // Add more settings and parameters here
     // ...
 };

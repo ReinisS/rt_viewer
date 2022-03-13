@@ -145,6 +145,7 @@ void showGui(Context &ctx)
         rt::resetAccumulation(ctx.rtx);
     }
     // Add more settings and parameters here
+    if (ImGui::DragFloat("Vertical FOV", &ctx.rtx.vfov)) { rt::resetAccumulation(ctx.rtx); }
     if (ImGui::Checkbox("Show normals", &ctx.rtx.show_normals)) { rt::resetAccumulation(ctx.rtx); }
     if (ImGui::Checkbox("Perform Antialiasing", &ctx.rtx.perform_antialiasing)) { rt::resetAccumulation(ctx.rtx); }
     if (ImGui::Checkbox("Perform Gamma correction", &ctx.rtx.perform_gamma_correction)) { rt::resetAccumulation(ctx.rtx); }
@@ -269,6 +270,17 @@ void resizeCallback(GLFWwindow *window, int width, int height)
     rt::resetImage(ctx->rtx);
 }
 
+void scroll_callback(GLFWwindow *window, double x, double y)
+{
+    // Forward event to ImGui
+    // ImGui_ImplGlfw_ScrollCallback(window, x, y);
+    if (ImGui::GetIO().WantCaptureMouse) return;
+
+    Context *ctx = static_cast<Context *>(glfwGetWindowUserPointer(window));
+    ctx->rtx.vfov = ctx->rtx.vfov + ctx->rtx.vfov_step * y * (-1);
+    rt::resetAccumulation(ctx->rtx);
+}
+
 int main(void)
 {
     Context ctx;
@@ -291,6 +303,7 @@ int main(void)
     glfwSetMouseButtonCallback(ctx.window, mouseButtonCallback);
     glfwSetCursorPosCallback(ctx.window, cursorPosCallback);
     glfwSetFramebufferSizeCallback(ctx.window, resizeCallback);
+    glfwSetScrollCallback(ctx.window, scroll_callback);
 
     // Load OpenGL functions
     glewExperimental = true;

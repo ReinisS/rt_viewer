@@ -16,7 +16,7 @@ namespace rt {
 // Store scene (world) in a global variable for convenience
 struct Scene {
     Sphere ground;
-    // Repalced by generic HitableList world
+    // Replaced by generic HitableList world
     // std::vector<Sphere> spheres;
     // std::vector<Box> boxes;
     // std::vector<Triangle> mesh;
@@ -99,22 +99,21 @@ glm::vec3 color(RTContext &rtx, const Ray &r, int max_bounces)
     return (1.0f - t) * rtx.ground_color + t * rtx.sky_color;
 }
 
-// MODIFY THIS FUNCTION!
-void setupScene(RTContext &rtx, const char *filename)
-{
-    auto material_ground = make_shared<Lambertian>(glm::vec3(0.2f, 0.6f, 0.2f));
+// Old way of adding objects to the scene
+// Need to change back hit_world() and uncomment Scene container objects for it to work
+// void custom_scene_old(const char *filename) {
+//     auto material_ground = make_shared<Lambertian>(glm::vec3(0.2f, 0.6f, 0.2f));
     
-    auto material_center = make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
-    auto material_left   = make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.1f);
-    auto material_right  = make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.5f);
+//     auto material_center = make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
+//     auto material_left   = make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.1f);
+//     auto material_right  = make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.5f);
 
-    auto material_blue_metal = make_shared<Metal>(glm::vec3(0.0f, 0.0f, 1.0f), 0.1f);
-    auto material_orange_metal = make_shared<Metal>(glm::vec3(1.0f, 0.6f, 0.0f), 0.6f);
-    auto material_red_matte = make_shared<Lambertian>(glm::vec3(1.0f, 0.0f, 0.0f));
+//     auto material_blue_metal = make_shared<Metal>(glm::vec3(0.0f, 0.0f, 1.0f), 0.1f);
+//     auto material_orange_metal = make_shared<Metal>(glm::vec3(1.0f, 0.6f, 0.0f), 0.6f);
+//     auto material_red_matte = make_shared<Lambertian>(glm::vec3(1.0f, 0.0f, 0.0f));
 
-    auto material_glass = make_shared<Dielectric>(1.5);
+//     auto material_glass = make_shared<Dielectric>(1.5);
 
-    // Old way of adding objects to the scene
     // Ground sphere
     // g_scene.ground = Sphere(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground);
 
@@ -149,10 +148,23 @@ void setupScene(RTContext &rtx, const char *filename)
     //    glm::vec3 v2 = mesh.vertices[i2] + glm::vec3(0.0f, 0.135f, 0.0f);
     //    g_scene.mesh.push_back(Triangle(v0, v1, v2, material_center));
     // }
+// }
 
+HitableList custom_scene(const char *filename) {
     // New way of adding objects to g_scene.world object
     HitableList world;
-    g_scene.world.clear();
+
+    auto material_ground = make_shared<Lambertian>(glm::vec3(0.2f, 0.6f, 0.2f));
+    
+    auto material_center = make_shared<Lambertian>(glm::vec3(0.7f, 0.3f, 0.3f));
+    auto material_left   = make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 0.1f);
+    auto material_right  = make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.5f);
+
+    auto material_blue_metal = make_shared<Metal>(glm::vec3(0.0f, 0.0f, 1.0f), 0.1f);
+    auto material_orange_metal = make_shared<Metal>(glm::vec3(1.0f, 0.6f, 0.0f), 0.6f);
+    auto material_red_matte = make_shared<Lambertian>(glm::vec3(1.0f, 0.0f, 0.0f));
+
+    auto material_glass = make_shared<Dielectric>(1.5);
 
     // Ground sphere
     world.add(make_shared<Sphere>(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground));
@@ -179,6 +191,64 @@ void setupScene(RTContext &rtx, const char *filename)
        world.add(make_shared<Triangle>(Triangle(v0, v1, v2, material_left)));
     }
 
+    return world;
+}
+
+HitableList random_scene() {
+    HitableList world;
+
+    auto ground_material = make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
+    world.add(make_shared<Sphere>(glm::vec3(0,-1000,0), 1000, ground_material));
+
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            auto choose_mat = random_double();
+            glm::vec3 center(a + 0.9*random_double(), 0.2, b + 0.9*random_double());
+
+            if ((center - glm::vec3(4, 0.2, 0)).length() > 0.9) {
+                shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = random_vec3() * random_vec3();
+                    sphere_material = make_shared<Lambertian>(albedo);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    auto albedo = random_vec3(0.5, 1);
+                    auto fuzz = random_double(0, 0.5);
+                    sphere_material = make_shared<Metal>(albedo, fuzz);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = make_shared<Dielectric>(1.5);
+                    world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    auto material1 = make_shared<Dielectric>(1.5);
+    world.add(make_shared<Sphere>(glm::vec3(0, 1, 0), 1.0, material1));
+
+    auto material2 = make_shared<Lambertian>(glm::vec3(0.4, 0.2, 0.1));
+    world.add(make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0, material2));
+
+    auto material3 = make_shared<Metal>(glm::vec3(0.7, 0.6, 0.5), 0.0);
+    world.add(make_shared<Sphere>(glm::vec3(4, 1, 0), 1.0, material3));
+
+    return world;
+}
+
+// MODIFY THIS FUNCTION!
+void setupScene(RTContext &rtx, const char *filename)
+{
+    g_scene.world.clear();
+
+    // custom_scene_old(filename);
+    HitableList world = custom_scene(filename);
+    // HitableList world = random_scene();
+
     g_scene.world = HitableList(make_shared<BvhNode>(world, 0.0, 1.0));
 }
 
@@ -188,10 +258,19 @@ void updateLine(RTContext &rtx, int y)
     int nx = rtx.width;
     int ny = rtx.height;
     float aspect = float(nx) / float(ny);
-    glm::vec3 lower_left_corner(-1.0f * aspect, -1.0f, -1.0f);
-    glm::vec3 horizontal(2.0f * aspect, 0.0f, 0.0f);
-    glm::vec3 vertical(0.0f, 2.0f, 0.0f);
+
+    float theta = glm::radians(rtx.vfov);
+    float h = tan(theta/2.0f);
+    float viewport_height = 2.0f * h;
+    float viewport_width = aspect * viewport_height;
+
+    float focal_length = 1.0f;
+
     glm::vec3 origin(0.0f, 0.0f, 0.0f);
+    glm::vec3 horizontal(viewport_width, 0.0f, 0.0f);
+    glm::vec3 vertical(0.0f, viewport_height, 0.0f);
+    // glm::vec3 lower_left_corner(-1.0f * aspect, -1.0f, -1.0f);
+    glm::vec3 lower_left_corner = origin - horizontal/2.0f - vertical/2.0f - glm::vec3(0, 0, focal_length);
     glm::mat4 world_from_view = glm::inverse(rtx.view);
 
     // You can try parallelising this loop by uncommenting this line:
