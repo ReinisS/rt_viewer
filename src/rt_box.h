@@ -31,6 +31,7 @@ bool Box::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRecord 
         rec.p = r.point_at_parameter(rec.t);
         glm::vec3 npc = (rec.p - center) / radius;
         rec.normal = glm::sign(npc) * glm::step(glm::compMax(glm::abs(npc)), glm::abs(npc));
+        rec.set_face_normal(r, rec.normal);
         rec.mat_ptr = mat_ptr;
         return true;
     }

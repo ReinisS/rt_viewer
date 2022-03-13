@@ -36,6 +36,7 @@ bool Triangle::hit(RTContext &rtx, const Ray &r, float t_min, float t_max, HitRe
                     rec.t = temp;
                     rec.p = r.point_at_parameter(rec.t);
                     rec.normal = n;
+                    rec.set_face_normal(r, rec.normal);
                     rec.mat_ptr = mat_ptr;
                     return true;
                 }

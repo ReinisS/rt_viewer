@@ -112,6 +112,8 @@ void setupScene(RTContext &rtx, const char *filename)
     auto material_orange_metal = make_shared<Metal>(glm::vec3(1.0f, 0.6f, 0.0f), 0.6f);
     auto material_red_matte = make_shared<Lambertian>(glm::vec3(1.0f, 0.0f, 0.0f));
 
+    auto material_glass = make_shared<Dielectric>(1.5);
+
     // Old way of adding objects to the scene
     // Ground sphere
     // g_scene.ground = Sphere(glm::vec3(0.0f, -1000.5f, 0.0f), 1000.0f, material_ground);
@@ -158,7 +160,7 @@ void setupScene(RTContext &rtx, const char *filename)
     // Other spheres
     // world.add(make_shared<Sphere>(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f, material_center));
     world.add(make_shared<Sphere>(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f, material_right));
-    world.add(make_shared<Sphere>(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f, material_left));
+    world.add(make_shared<Sphere>(glm::vec3(-1.0f, 0.0f, 0.0f), 0.5f, material_glass));
 
     world.add(make_shared<Sphere>(glm::vec3(-1.0f, 0.0f, -1.0f), 0.5f, material_blue_metal));
     world.add(make_shared<Sphere>(glm::vec3(0.0f, 0.0f, -1.0f), 0.5f, material_orange_metal));
